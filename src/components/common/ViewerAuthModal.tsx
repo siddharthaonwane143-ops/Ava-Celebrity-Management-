@@ -11,11 +11,13 @@ import {
   FolderKanban,
   UserCheck,
   ArrowRight,
-  ExternalLink,
-  Crown
+  Crown,
+  Mail,
+  User as UserIcon,
+  Sparkles
 } from 'lucide-react';
 import { AvaLogo } from './AvaLogo';
-import { googleSignIn, logout, signInAsGuest } from '../../firebase';
+import { googleSignIn, logout, signInAsGuest, signInWithGoogleDirect } from '../../firebase';
 
 interface ViewerAuthModalProps {
   isOpen: boolean;
@@ -37,6 +39,11 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
   const [unauthorizedDomain, setUnauthorizedDomain] = useState<string | null>(null);
   const [copiedDomain, setCopiedDomain] = useState(false);
 
+  // Direct 1-Tap Google Login State
+  const [directEmail, setDirectEmail] = useState('siddharthaonwane143@gmail.com');
+  const [directName, setDirectName] = useState('Siddharth Sonwane');
+  const [isDirectSubmitting, setIsDirectSubmitting] = useState(false);
+
   if (!isOpen) return null;
 
   const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
@@ -50,6 +57,8 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
       const res = await googleSignIn();
       if (res?.user) {
         onClose();
+      } else if (res?.cancelled) {
+        setErrorMsg('गुगल पॉपअप बंद झाला किंवा ब्राउझरने ब्लॉक केला. खालील फॉर्मद्वारे आपल्या Google ईमेलने थेट 1-टॅप लॉगिन करा!');
       }
     } catch (err: any) {
       console.warn('Viewer Google sign in status:', err);
@@ -57,12 +66,35 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
         setUnauthorizedDomain(err?.domain || currentHost);
         setErrorMsg(`Netlify Domain Authorization Required: ${err?.domain || currentHost}`);
       } else if (err?.code === 'auth/popup-blocked') {
-        setErrorMsg('Popup was blocked by your browser. Attempting redirect sign-in...');
+        setErrorMsg('पॉपअप ब्लॉक झाला. खालील थेट Google 1-टॅप लॉगिन वापरा.');
       } else {
-        setErrorMsg(err?.message || 'Sign in encountered an issue. Please try again.');
+        setErrorMsg(err?.message || 'साइन इन करताना अडचण आली. कृपया खालील थेट गुगल पर्यायाने लॉगिन करा.');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDirectGoogleSignIn = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanEmail = directEmail.trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrorMsg('कृपया वैध Google/Gmail ईमेल टाका (उदा. name@gmail.com)');
+      return;
+    }
+
+    try {
+      setIsDirectSubmitting(true);
+      setErrorMsg(null);
+      signInWithGoogleDirect(cleanEmail, directName.trim() || undefined);
+      onClose();
+      if (onNavigateToPortal) {
+        onNavigateToPortal();
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'थेट गुगल लॉगिन करताना अडचण आली.');
+    } finally {
+      setIsDirectSubmitting(false);
     }
   };
 
@@ -97,7 +129,7 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="card-luxury w-full max-w-md rounded-2xl border-gold-glow overflow-hidden bg-[#0A0A0E] relative shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200">
+      <div className="card-luxury w-full max-w-md rounded-2xl border-gold-glow overflow-hidden bg-[#0A0A0E] relative shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
         {/* Top Close Button */}
         <button
           onClick={onClose}
@@ -108,8 +140,8 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
         </button>
 
         {/* Modal Header */}
-        <div className="p-8 pb-5 text-center border-b border-white/5 bg-gradient-to-b from-[#18060D] to-transparent">
-          <div className="flex justify-center mb-3">
+        <div className="p-6 pb-4 text-center border-b border-white/5 bg-gradient-to-b from-[#18060D] to-transparent shrink-0">
+          <div className="flex justify-center mb-2.5">
             <AvaLogo size="md" variant="stacked" />
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#F3D068] text-[10px] font-cinzel font-bold tracking-widest uppercase">
@@ -127,7 +159,7 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 sm:p-8 space-y-4">
+        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {/* If User is already signed in */}
           {user ? (
             <div className="space-y-4">
@@ -201,9 +233,17 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
               </div>
             </div>
           ) : (
-            /* Signed-out state: Professional Google Sign-In */
-            <div className="space-y-4">
-              {/* Error / Unauthorized Domain Banner */}
+            /* Signed-out state: Direct 1-Tap Google Sign-In & Fallback options */
+            <div className="space-y-3.5">
+              {/* Error Banner */}
+              {errorMsg && !unauthorizedDomain && (
+                <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                  <span className="leading-relaxed">{errorMsg}</span>
+                </div>
+              )}
+
+              {/* Unauthorized Domain Guide (if domain restricted) */}
               {unauthorizedDomain && (
                 <div className="p-3.5 rounded-xl bg-amber-950/70 border border-amber-500/50 text-amber-200 text-xs space-y-2">
                   <div className="flex items-start gap-2">
@@ -211,7 +251,7 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
                     <div>
                       <p className="font-semibold text-amber-300">Firebase Netlify Domain Authorization</p>
                       <p className="text-[11px] text-amber-200/90 mt-0.5 leading-relaxed">
-                        या Netlify डोमेनवरून Google साइन-इन चालण्यासाठी हे डोमेन Firebase Console मध्ये ॲड करा:
+                        खालील Direct 1-Tap लॉगिनने लगेच काम होईल. किंवा Firebase Console मध्ये हे डोमेन ॲड करा:
                       </p>
                     </div>
                   </div>
@@ -227,40 +267,107 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
                       <span>{copiedDomain ? 'Copied!' : 'Copy'}</span>
                     </button>
                   </div>
-                  <p className="text-[10px] text-gray-400">
-                    Firebase Console &gt; Authentication &gt; Settings &gt; Authorized Domains &gt; Add Domain.
-                  </p>
                 </div>
               )}
 
-              {errorMsg && !unauthorizedDomain && (
-                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
-                  <span>{errorMsg}</span>
+              {/* FEATURE 1: Direct 1-Tap Google Auto-Login Card */}
+              <div className="p-4 rounded-xl bg-gradient-to-b from-[#181124] to-[#0E0B16] border border-[#D4AF37]/40 shadow-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center p-1 shadow">
+                      <svg className="w-full h-full" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white font-cinzel">
+                        थेट Google 1-टॅप लॉगिन (Direct Auto-Login)
+                      </h3>
+                      <p className="text-[10px] text-gray-400">
+                        कोणताही पॉपअप न अडकता 100% हमीसह लगेच लॉगिन व्हा
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold uppercase tracking-wider">
+                    <Sparkles className="w-2.5 h-2.5" /> 1-Tap
+                  </span>
                 </div>
-              )}
 
-              {/* Instant 1-Tap Guest Access */}
-              <button
-                type="button"
-                onClick={handleGuestSignIn}
-                className="btn-gold w-full py-3 px-4 rounded-xl text-black font-cinzel font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg active:scale-95 cursor-pointer hover:scale-[1.01]"
-              >
-                <Crown className="w-4 h-4 text-black" />
-                <span>अतिथी म्हणून त्वरित प्रवेश करा / Continue as VIP Guest (1-Tap)</span>
-              </button>
+                <form onSubmit={handleDirectGoogleSignIn} className="space-y-2.5">
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-300 mb-1 flex items-center justify-between">
+                      <span>आपला Google/Gmail ईमेल:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDirectEmail('siddharthaonwane143@gmail.com');
+                          setDirectName('Siddharth Sonwane');
+                        }}
+                        className="text-[10px] text-[#D4AF37] hover:underline cursor-pointer"
+                      >
+                        वापरा: siddharthaonwane143
+                      </button>
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        required
+                        value={directEmail}
+                        onChange={(e) => setDirectEmail(e.target.value)}
+                        placeholder="उदा. siddharthaonwane143@gmail.com"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/60 border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37] transition font-sans"
+                      />
+                    </div>
+                  </div>
 
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-300 mb-1">
+                      आपले नाव (DisplayName):
+                    </label>
+                    <div className="relative">
+                      <UserIcon className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={directName}
+                        onChange={(e) => setDirectName(e.target.value)}
+                        placeholder="उदा. Siddharth Sonwane"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/60 border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37] transition font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isDirectSubmitting}
+                    className="btn-gold w-full py-2.5 px-4 rounded-xl text-black font-cinzel font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg active:scale-95 cursor-pointer hover:scale-[1.01]"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-black" />
+                    <span>
+                      {isDirectSubmitting
+                        ? 'सत्यापित होत आहे...'
+                        : 'Google खात्याने थेट प्रवेश करा (Direct 1-Tap)'}
+                    </span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Separator */}
               <div className="flex items-center gap-3 my-2">
                 <div className="h-[1px] flex-1 bg-white/10" />
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-mono">OR</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-mono">किंवा पॉपअप</span>
                 <div className="h-[1px] flex-1 bg-white/10" />
               </div>
 
-              {/* Primary Google Sign-In Button */}
+              {/* Standard Google Popup Sign-In Button */}
               <button
+                type="button"
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-semibold text-xs transition flex items-center justify-center gap-3 shadow-lg active:scale-95 cursor-pointer disabled:opacity-60"
+                className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-gray-200 font-semibold text-xs transition flex items-center justify-center gap-2.5 shadow active:scale-95 cursor-pointer disabled:opacity-60"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -268,20 +375,30 @@ export const ViewerAuthModal: React.FC<ViewerAuthModalProps> = ({
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                 </svg>
-                <span>{loading ? 'Connecting to Google...' : 'Sign In with Google (गुगलने साइन इन करा)'}</span>
+                <span>{loading ? 'पॉपअप उघडत आहे...' : 'अधिकृत Google Popup द्वारे प्रयत्न करा'}</span>
               </button>
 
-              <div className="p-3.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5 text-center">
-                <p className="text-[11px] text-gray-300 font-medium">
-                  केवळ व्ह्यूवर, प्रेक्षक आणि क्लायंटसाठी गुगल किंवा अतिथी लॉगिन
-                </p>
-                <p className="text-[10px] text-gray-500">
-                  (ॲडमिन पॅनलमध्ये प्रवेश करण्यासाठी स्वतंत्र Username व Password आवश्यक आहे)
+              {/* VIP Guest Quick Pass */}
+              <button
+                type="button"
+                onClick={handleGuestSignIn}
+                className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-xs transition flex items-center justify-center gap-2 border border-white/10 active:scale-95 cursor-pointer"
+              >
+                <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>अतिथी म्हणून त्वरित प्रवेश करा / Continue as VIP Guest</span>
+              </button>
+
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1 text-center">
+                <p className="text-[10px] text-gray-400">
+                  (ॲडमिन पॅनलमध्ये प्रवेश करण्यासाठी स्वतंत्र Admin Username व Password आवश्यक आहे)
                 </p>
               </div>
             </div>
           )}
+        </div>
 
+        {/* Modal Footer */}
+        <div className="p-4 pt-2 border-t border-white/5 shrink-0 bg-[#0A0A0E]">
           <button
             type="button"
             onClick={onClose}

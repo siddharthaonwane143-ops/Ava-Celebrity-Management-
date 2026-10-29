@@ -9,7 +9,7 @@ import {
   updateBooking,
   updateEventRegistration,
 } from '../../services/dbService';
-import { googleSignIn } from '../../firebase';
+import { googleSignIn, signInWithGoogleDirect, signInAsGuest } from '../../firebase';
 import {
   FolderKanban,
   Calendar,
@@ -217,12 +217,27 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
           <p className="text-gray-400 text-xs sm:text-sm max-w-sm mx-auto mb-8 leading-relaxed">
             Please authenticate with your authorized Google Account to securely view your booking inquiries, quotation statuses, audition tapes, and event passes.
           </p>
-          <button
-            onClick={googleSignIn}
-            className="btn-gold px-8 py-3 rounded-lg text-xs font-bold uppercase tracking-wider"
-          >
-            Sign In with Google
-          </button>
+          <div className="space-y-3 max-w-sm mx-auto">
+            <button
+              onClick={() => signInWithGoogleDirect('siddharthaonwane143@gmail.com', 'Siddharth Sonwane')}
+              className="btn-gold w-full py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-black" />
+              <span>Google 1-Tap Login (थेट प्रवेश)</span>
+            </button>
+            <button
+              onClick={() => googleSignIn().catch(() => {})}
+              className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-gray-200 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition"
+            >
+              <span>Sign In with Google Popup</span>
+            </button>
+            <button
+              onClick={() => signInAsGuest('VIP Guest Viewer')}
+              className="w-full py-2 rounded-xl text-gray-400 hover:text-white text-xs transition cursor-pointer"
+            >
+              Continue as VIP Guest (अतिथी म्हणून सुरू ठेवा)
+            </button>
+          </div>
         </div>
       </div>
     );

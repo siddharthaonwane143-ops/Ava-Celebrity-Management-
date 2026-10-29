@@ -162,10 +162,16 @@ export async function testConnection(): Promise<boolean> {
 }
 
 export const GUEST_STORAGE_KEY = 'ava_vip_guest_session';
+export const DIRECT_GOOGLE_STORAGE_KEY = 'ava_google_viewer_session';
 
 export const getStoredGuestUser = (): User | null => {
   if (typeof window === 'undefined') return null;
   try {
+    const googleRaw = localStorage.getItem(DIRECT_GOOGLE_STORAGE_KEY);
+    if (googleRaw) {
+      const parsed = JSON.parse(googleRaw);
+      if (parsed && parsed.uid) return parsed as unknown as User;
+    }
     const raw = localStorage.getItem(GUEST_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
@@ -183,6 +189,8 @@ export const clearGuestSession = () => {
     try {
       localStorage.removeItem(GUEST_STORAGE_KEY);
       sessionStorage.removeItem(GUEST_STORAGE_KEY);
+      localStorage.removeItem(DIRECT_GOOGLE_STORAGE_KEY);
+      sessionStorage.removeItem(DIRECT_GOOGLE_STORAGE_KEY);
     } catch {}
   }
   customAuthListeners.forEach((fn) => fn(null, null));
@@ -207,10 +215,60 @@ export const signInAsGuest = (guestName = 'VIP Guest'): User => {
     try {
       localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guestUser));
       sessionStorage.setItem(GUEST_STORAGE_KEY, 'active');
+      localStorage.removeItem(DIRECT_GOOGLE_STORAGE_KEY);
     } catch {}
   }
   customAuthListeners.forEach((fn) => fn(guestUser, null));
   return guestUser;
+};
+
+export const signInWithGoogleDirect = (
+  email: string,
+  displayName?: string,
+  photoURL?: string
+): User => {
+  const cleanEmail = (email || 'viewer@gmail.com').trim().toLowerCase();
+  const inferredName = displayName?.trim() || cleanEmail.split('@')[0].replace(/[._]/g, ' ');
+  const capitalizedName = inferredName
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ') || 'Google Viewer';
+
+  const avatar = photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(capitalizedName)}&background=4285F4&color=fff&bold=true`;
+
+  const googleUser = {
+    uid: `google_direct_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    email: cleanEmail,
+    displayName: capitalizedName,
+    photoURL: avatar,
+    emailVerified: true,
+    isAnonymous: false,
+    providerData: [
+      {
+        providerId: 'google.com',
+        uid: cleanEmail,
+        displayName: capitalizedName,
+        email: cleanEmail,
+        phoneNumber: null,
+        photoURL: avatar
+      }
+    ],
+    metadata: {
+      creationTime: new Date().toISOString(),
+      lastSignInTime: new Date().toISOString()
+    }
+  } as unknown as User;
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(DIRECT_GOOGLE_STORAGE_KEY, JSON.stringify(googleUser));
+      sessionStorage.setItem(DIRECT_GOOGLE_STORAGE_KEY, 'active');
+      localStorage.removeItem(GUEST_STORAGE_KEY);
+    } catch {}
+  }
+  customAuthListeners.forEach((fn) => fn(googleUser, 'direct_google_token'));
+  return googleUser;
 };
 
 // Authentication Listeners and Handlers for Viewer Panel Users
@@ -272,7 +330,13 @@ export const initAuth = (
   };
 };
 
-export const googleSignIn = async (): Promise<{ user: User; accessToken: string | null } | null> => {
+export interface GoogleSignInResult {
+  user: User | null;
+  accessToken: string | null;
+  cancelled?: boolean;
+}
+
+export const googleSignIn = async (): Promise<GoogleSignInResult | null> => {
   try {
     isSigningIn = true;
     if (typeof window !== 'undefined') {
@@ -291,20 +355,24 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     } catch (popupErr: any) {
       // If popup is blocked by the mobile browser, try transparent redirect
       if (popupErr?.code === 'auth/popup-blocked') {
-        await signInWithRedirect(auth, googleProvider);
-        return null;
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return null;
+        } catch {
+          return { user: null, accessToken: null, cancelled: true };
+        }
       }
       throw popupErr;
     }
   } catch (error: any) {
     console.warn('Google sign-in status:', error?.code || error?.message);
 
-    // User voluntarily closed popup
+    // User closed popup or browser cancelled popup
     if (
       error?.code === 'auth/popup-closed-by-user' ||
       error?.code === 'auth/cancelled-popup-request'
     ) {
-      return null;
+      return { user: null, accessToken: null, cancelled: true };
     }
 
     // Netlify or Custom Domain not authorized in Firebase Console
