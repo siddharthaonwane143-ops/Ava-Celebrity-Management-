@@ -1,0 +1,391 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile representation in AVA Celebrity Management",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Auth UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "photoURL": { "type": "string", "description": "Avatar URL" },
+        "role": { "type": "string", "enum": ["admin", "customer", "talent"], "description": "Assigned role" },
+        "phone": { "type": "string", "description": "Contact phone" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "TalentCategory": {
+      "title": "TalentCategory",
+      "description": "Talent categories such as Celebrities, Actors, Models, etc.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Category title" },
+        "slug": { "type": "string", "description": "URL slug" },
+        "description": { "type": "string", "description": "Category overview" },
+        "image": { "type": "string", "description": "Banner or category artwork" },
+        "subcategories": { "type": "string", "description": "Comma separated or serialized subcategories" },
+        "displayOrder": { "type": "number", "description": "Order on page" },
+        "isPublished": { "type": "boolean", "description": "Visibility flag" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "slug"]
+    },
+    "TalentProfile": {
+      "title": "TalentProfile",
+      "description": "Celebrity and talent portfolio profiles",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full or stage name" },
+        "categorySlug": { "type": "string", "description": "Category slug" },
+        "categoryName": { "type": "string", "description": "Category name" },
+        "subcategory": { "type": "string", "description": "Subcategory" },
+        "bio": { "type": "string", "description": "Professional bio" },
+        "photoUrl": { "type": "string", "description": "Approved profile photo" },
+        "portfolioUrls": { "type": "string", "description": "JSON array of media or links" },
+        "skills": { "type": "string", "description": "Skills and specializations" },
+        "languages": { "type": "string", "description": "Spoken languages" },
+        "city": { "type": "string", "description": "Approved public city/region" },
+        "experience": { "type": "string", "description": "Experience years/highlights" },
+        "supportedBookingTypes": { "type": "string", "description": "Comma separated booking types" },
+        "availability": { "type": "string", "enum": ["Available", "Limited", "Booked"], "description": "Availability state" },
+        "status": { "type": "string", "enum": ["draft", "pending", "approved", "published", "archived"], "description": "Visibility workflow state" },
+        "isFeatured": { "type": "boolean", "description": "Featured on homepage" },
+        "creatorType": { "type": "string", "description": "Creator niche if applicable" },
+        "socialHandle": { "type": "string", "description": "Verified social link" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "categorySlug", "status"]
+    },
+    "Package": {
+      "title": "Package",
+      "description": "Curated booking and engagement packages with pricing/deliverables",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Package title" },
+        "categorySlug": { "type": "string", "description": "Target category slug" },
+        "priceType": { "type": "string", "enum": ["fixed", "quote"], "description": "Pricing model" },
+        "price": { "type": "string", "description": "Price display or starting rate" },
+        "duration": { "type": "string", "description": "Duration or timeline" },
+        "deliverables": { "type": "string", "description": "Included deliverables list" },
+        "exclusions": { "type": "string", "description": "Terms and exclusions" },
+        "imageUrl": { "type": "string", "description": "Package visual artwork" },
+        "isPublished": { "type": "boolean", "description": "Public visibility" },
+        "isFeatured": { "type": "boolean", "description": "Featured badge" },
+        "displayOrder": { "type": "number", "description": "Display order" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "categorySlug", "priceType"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Talent booking enquiry or service reservation",
+      "type": "object",
+      "properties": {
+        "bookingReference": { "type": "string", "description": "Unique reference ID (e.g. AVA-BK-XXXX)" },
+        "customerUid": { "type": "string", "description": "Customer user UID" },
+        "customerName": { "type": "string", "description": "Client full name" },
+        "customerEmail": { "type": "string", "description": "Client email" },
+        "customerPhone": { "type": "string", "description": "Client phone" },
+        "bookingType": { "type": "string", "description": "Booking service type" },
+        "talentId": { "type": "string", "description": "Target talent profile ID if any" },
+        "talentName": { "type": "string", "description": "Target talent display name" },
+        "packageId": { "type": "string", "description": "Selected package ID if any" },
+        "packageTitle": { "type": "string", "description": "Selected package title" },
+        "eventName": { "type": "string", "description": "Campaign or event title" },
+        "eventDate": { "type": "string", "description": "Event date" },
+        "cityVenue": { "type": "string", "description": "Location or remote specification" },
+        "duration": { "type": "string", "description": "Expected duration" },
+        "budgetRange": { "type": "string", "description": "Client budget" },
+        "serviceRequirements": { "type": "string", "description": "Detailed requirements" },
+        "additionalNotes": { "type": "string", "description": "Additional notes" },
+        "status": { "type": "string", "enum": ["Submitted", "Under Review", "Quote Prepared", "Awaiting Customer Response", "Confirmed", "Completed", "Cancelled", "Rejected"], "description": "Workflow status" },
+        "internalNotes": { "type": "string", "description": "Private administrative notes" },
+        "quotationAmount": { "type": "string", "description": "Official quote prepared by Admin" },
+        "paymentStatus": { "type": "string", "description": "Payment tracking status" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["bookingReference", "customerEmail", "customerName", "bookingType", "status"]
+    },
+    "TalentShow": {
+      "title": "TalentShow",
+      "description": "Upcoming talent competitions, events, and performance shows",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Show title" },
+        "category": { "type": "string", "description": "Competition category" },
+        "bannerUrl": { "type": "string", "description": "Approved banner artwork" },
+        "description": { "type": "string", "description": "Full description and overview" },
+        "eventDate": { "type": "string", "description": "Event date and time" },
+        "registrationDeadline": { "type": "string", "description": "Deadline for registrations" },
+        "format": { "type": "string", "enum": ["Physical", "Online", "Hybrid"], "description": "Format" },
+        "venue": { "type": "string", "description": "Venue address or stream URL" },
+        "city": { "type": "string", "description": "Host city" },
+        "eligibility": { "type": "string", "description": "Eligibility rules & terms" },
+        "prizes": { "type": "string", "description": "Official prize details if approved" },
+        "feeType": { "type": "string", "enum": ["Free", "Paid"], "description": "Registration fee type" },
+        "feeAmount": { "type": "string", "description": "Fee amount if applicable" },
+        "registrationLimit": { "type": "number", "description": "Max entries" },
+        "status": { "type": "string", "enum": ["Upcoming", "Registration Open", "Registration Closed", "Completed", "Cancelled"], "description": "Show status" },
+        "isPublished": { "type": "boolean", "description": "Public visibility" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "eventDate", "status"]
+    },
+    "EventRegistration": {
+      "title": "EventRegistration",
+      "description": "Participant registrations for talent shows & events",
+      "type": "object",
+      "properties": {
+        "registrationReference": { "type": "string", "description": "Unique registration ID (AVA-EV-XXXX)" },
+        "eventId": { "type": "string", "description": "Target show/event ID" },
+        "eventTitle": { "type": "string", "description": "Event title" },
+        "participantUid": { "type": "string", "description": "Participant auth UID" },
+        "fullName": { "type": "string", "description": "Participant full name" },
+        "email": { "type": "string", "description": "Participant email" },
+        "phone": { "type": "string", "description": "Participant phone" },
+        "age": { "type": "string", "description": "Participant age" },
+        "city": { "type": "string", "description": "City of residence" },
+        "category": { "type": "string", "description": "Performance category" },
+        "performanceDetails": { "type": "string", "description": "Description of act / piece" },
+        "portfolioLink": { "type": "string", "description": "Demo video or portfolio link" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Waitlisted", "Rejected", "Withdrawn"], "description": "Status" },
+        "internalNotes": { "type": "string", "description": "Admin notes" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["registrationReference", "eventId", "fullName", "email", "status"]
+    },
+    "Audition": {
+      "title": "Audition",
+      "description": "Auditions and casting calls for acting, modeling, dancing, singing",
+      "type": "object",
+      "properties": {
+        "projectTitle": { "type": "string", "description": "Project title" },
+        "category": { "type": "string", "description": "Talent category" },
+        "description": { "type": "string", "description": "Role / call description" },
+        "eligibility": { "type": "string", "description": "Eligibility criteria" },
+        "auditionMethod": { "type": "string", "enum": ["In-Person", "Self-Tape / Online", "Hybrid"], "description": "Format" },
+        "deadline": { "type": "string", "description": "Submission deadline" },
+        "location": { "type": "string", "description": "Casting location or remote" },
+        "requiredMaterials": { "type": "string", "description": "Headshot, showreel, monologue, etc." },
+        "terms": { "type": "string", "description": "Application terms" },
+        "status": { "type": "string", "enum": ["Open", "Closing Soon", "Closed"], "description": "Audition status" },
+        "isPublished": { "type": "boolean", "description": "Public visibility" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectTitle", "category", "deadline", "status"]
+    },
+    "AuditionApplication": {
+      "title": "AuditionApplication",
+      "description": "Applicant submissions for casting calls",
+      "type": "object",
+      "properties": {
+        "applicationReference": { "type": "string", "description": "Unique ID (AVA-AUD-XXXX)" },
+        "auditionId": { "type": "string", "description": "Target audition ID" },
+        "projectTitle": { "type": "string", "description": "Project title" },
+        "applicantUid": { "type": "string", "description": "Applicant UID" },
+        "fullName": { "type": "string", "description": "Applicant name" },
+        "email": { "type": "string", "description": "Applicant email" },
+        "phone": { "type": "string", "description": "Applicant phone" },
+        "experience": { "type": "string", "description": "Experience summary" },
+        "reelUrl": { "type": "string", "description": "Showreel or self-tape link" },
+        "headshotUrl": { "type": "string", "description": "Headshot image link" },
+        "notes": { "type": "string", "description": "Applicant message" },
+        "status": { "type": "string", "enum": ["Submitted", "Under Review", "Shortlisted", "Selected", "Rejected"], "description": "Review status" },
+        "internalNotes": { "type": "string", "description": "Admin notes" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["applicationReference", "auditionId", "fullName", "email", "status"]
+    },
+    "PartnerProfile": {
+      "title": "PartnerProfile",
+      "description": "Cinematography, photography, fashion, event, and production partners",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Partner brand or entity name" },
+        "partnerType": { "type": "string", "description": "Partner category name" },
+        "partnerTypeSlug": { "type": "string", "description": "Partner category slug" },
+        "logoUrl": { "type": "string", "description": "Authorized logo" },
+        "bannerUrl": { "type": "string", "description": "Portfolio banner" },
+        "description": { "type": "string", "description": "Services overview" },
+        "website": { "type": "string", "description": "Official website" },
+        "services": { "type": "string", "description": "Key capabilities" },
+        "city": { "type": "string", "description": "Primary base / city" },
+        "partnershipTier": { "type": "string", "enum": ["Official Partner", "Technical Partner", "Creative Partner", "Supporting Partner"], "description": "Partnership level" },
+        "isFeatured": { "type": "boolean", "description": "Featured partner" },
+        "isPublished": { "type": "boolean", "description": "Public visibility" },
+        "displayOrder": { "type": "number", "description": "Display order" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "partnerTypeSlug", "partnershipTier"]
+    },
+    "SponsorProfile": {
+      "title": "SponsorProfile",
+      "description": "Official corporate and event sponsors",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Sponsor brand name" },
+        "logoUrl": { "type": "string", "description": "Authorized logo" },
+        "tier": { "type": "string", "enum": ["Title Sponsor", "Platinum Sponsor", "Gold Sponsor", "Event Sponsor"], "description": "Sponsor tier" },
+        "description": { "type": "string", "description": "Sponsorship overview" },
+        "website": { "type": "string", "description": "Official website link" },
+        "benefits": { "type": "string", "description": "Authorized deliverables" },
+        "isPublished": { "type": "boolean", "description": "Public visibility" },
+        "displayOrder": { "type": "number", "description": "Display order" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "tier"]
+    },
+    "MarketingBanner": {
+      "title": "MarketingBanner",
+      "description": "Admin-uploaded homepage and section marketing banners",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Banner title" },
+        "headline": { "type": "string", "description": "Hero headline text" },
+        "subtitle": { "type": "string", "description": "Hero subtitle text" },
+        "imageUrl": { "type": "string", "description": "Banner image URL" },
+        "placement": { "type": "string", "enum": ["home_hero", "category_header", "events_banner", "partners_banner"], "description": "Display placement" },
+        "primaryCtaLabel": { "type": "string", "description": "Primary button label" },
+        "primaryCtaLink": { "type": "string", "description": "Primary button destination" },
+        "secondaryCtaLabel": { "type": "string", "description": "Secondary button label" },
+        "secondaryCtaLink": { "type": "string", "description": "Secondary button destination" },
+        "displayOrder": { "type": "number", "description": "Rotation order" },
+        "isPublished": { "type": "boolean", "description": "Active flag" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "imageUrl", "placement"]
+    },
+    "TalentApplication": {
+      "title": "TalentApplication",
+      "description": "Talent registration applications submitted by viewers to join AVA",
+      "type": "object",
+      "properties": {
+        "applicationReference": { "type": "string", "description": "Unique registration ID (AVA-TAL-XXXX)" },
+        "applicantUid": { "type": "string", "description": "Applicant UID" },
+        "fullName": { "type": "string", "description": "Applicant full name" },
+        "stageName": { "type": "string", "description": "Stage or alias name" },
+        "category": { "type": "string", "description": "Target talent category" },
+        "email": { "type": "string", "description": "Email address" },
+        "phone": { "type": "string", "description": "Contact number" },
+        "city": { "type": "string", "description": "City & Country" },
+        "bio": { "type": "string", "description": "Background summary" },
+        "portfolioUrl": { "type": "string", "description": "Portfolio or social media link" },
+        "headshotUrl": { "type": "string", "description": "Headshot photo" },
+        "status": { "type": "string", "enum": ["Submitted", "Under Review", "Shortlisted", "Approved", "Rejected"], "description": "Status" },
+        "internalNotes": { "type": "string", "description": "Internal notes" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["applicationReference", "fullName", "email", "category", "status"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Website branding, navigation configuration, and company metadata",
+      "type": "object",
+      "properties": {
+        "brandName": { "type": "string", "description": "Brand name" },
+        "tagline": { "type": "string", "description": "Tagline" },
+        "contactEmail": { "type": "string", "description": "General email" },
+        "contactPhone": { "type": "string", "description": "Office phone" },
+        "headquarters": { "type": "string", "description": "Office city" },
+        "enabledNavItems": { "type": "string", "description": "JSON array of enabled navigation items" },
+        "heroHeadline": { "type": "string", "description": "Default hero headline" },
+        "heroSubtitle": { "type": "string", "description": "Default hero subtitle" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["brandName"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Security and administrative audit history",
+      "type": "object",
+      "properties": {
+        "adminEmail": { "type": "string", "description": "Actor email" },
+        "action": { "type": "string", "description": "Action performed" },
+        "resource": { "type": "string", "description": "Affected entity" },
+        "details": { "type": "string", "description": "Action metadata" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["action", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and roles"
+    },
+    "/admins/{userId}": {
+      "schema": "User",
+      "description": "Designated administrator lookup document"
+    },
+    "/talentCategories/{categoryId}": {
+      "schema": "TalentCategory",
+      "description": "Talent categories"
+    },
+    "/talentProfiles/{profileId}": {
+      "schema": "TalentProfile",
+      "description": "Celebrities, actors, models, creators profiles"
+    },
+    "/packages/{packageId}": {
+      "schema": "Package",
+      "description": "Booking and service packages"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Talent booking enquiries and contracts"
+    },
+    "/talentShows/{showId}": {
+      "schema": "TalentShow",
+      "description": "Talent shows and competitions"
+    },
+    "/eventRegistrations/{regId}": {
+      "schema": "EventRegistration",
+      "description": "Show and event registrations"
+    },
+    "/auditions/{auditionId}": {
+      "schema": "Audition",
+      "description": "Casting calls and auditions"
+    },
+    "/auditionApplications/{appId}": {
+      "schema": "AuditionApplication",
+      "description": "Audition submissions"
+    },
+    "/talentApplications/{appId}": {
+      "schema": "TalentApplication",
+      "description": "Talent joining applications"
+    },
+    "/partnerProfiles/{partnerId}": {
+      "schema": "PartnerProfile",
+      "description": "Cinematography, production, fashion, event partners"
+    },
+    "/sponsorProfiles/{sponsorId}": {
+      "schema": "SponsorProfile",
+      "description": "Official sponsors"
+    },
+    "/marketingBanners/{bannerId}": {
+      "schema": "MarketingBanner",
+      "description": "Marketing hero and section banners"
+    },
+    "/siteSettings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Website settings and navigation configuration"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Admin activity audit records"
+    }
+  }
+}

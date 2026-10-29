@@ -1,0 +1,117 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email == 'siddharthaonwane143@gmail.com';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Admins lookup collection
+    match /admins/{userId} {
+      allow read, write: if true;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Talent Categories
+    match /talentCategories/{categoryId} {
+      allow read, write: if true;
+    }
+
+    // Talent Profiles
+    match /talentProfiles/{profileId} {
+      allow read, write: if true;
+    }
+
+    // Professional Video Media (Events, Festivals, Long Videos, Showreels)
+    match /videoMediaItems/{videoId} {
+      allow read, write: if true;
+    }
+
+    // Packages & Pricing
+    match /packages/{packageId} {
+      allow read, write: if true;
+    }
+
+    // Upcoming Talent Shows & Events
+    match /talentShows/{showId} {
+      allow read, write: if true;
+    }
+
+    // Auditions & Casting Calls
+    match /auditions/{auditionId} {
+      allow read, write: if true;
+    }
+
+    // Partners
+    match /partnerProfiles/{partnerId} {
+      allow read, write: if true;
+    }
+
+    // Sponsors
+    match /sponsorProfiles/{sponsorId} {
+      allow read, write: if true;
+    }
+
+    // Marketing Banners
+    match /marketingBanners/{bannerId} {
+      allow read, write: if true;
+    }
+
+    // Site Settings
+    match /siteSettings/{settingId} {
+      allow read, write: if true;
+    }
+
+    // Live Telecast Broadcasts
+    match /liveTelecasts/{telecastId} {
+      allow read, write: if true;
+    }
+
+    // Team Contact Inquiries (Google Sheet Integration)
+    match /teamInquiries/{inquiryId} {
+      allow read, write: if true;
+    }
+
+    // Bookings & Quotations
+    match /bookings/{bookingId} {
+      allow read, write: if true;
+    }
+
+    // Event Registrations
+    match /eventRegistrations/{regId} {
+      allow read, write: if true;
+    }
+
+    // Audition Applications
+    match /auditionApplications/{appId} {
+      allow read, write: if true;
+    }
+
+    // Talent Applications (Joining AVA)
+    match /talentApplications/{appId} {
+      allow read, write: if true;
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}

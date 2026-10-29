@@ -1,0 +1,15 @@
+{
+  "profiles": [],
+  "theme": {
+    "preset": "royal_gold",
+    "goldGlowIntensity": "vibrant",
+    "cardBevelStyle": "diamond_gold",
+    "ambientLighting": "spotlight",
+    "bannerDecoration": "filigree",
+    "fontStyle": "cinzel_regal"
+  },
+  "videoItems": [],
+  "banners": [],
+  "settings": null,
+  "updatedAt": "2026-10-23T20:33:54.647Z"
+}
